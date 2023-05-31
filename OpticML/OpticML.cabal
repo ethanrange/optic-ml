@@ -1,5 +1,5 @@
 cabal-version:      3.0
-name:               optic-ml
+name:               OpticML
 version:            0.0.0.1
 synopsis:           Machine learning toolkit through profunctor optics
 
@@ -31,7 +31,7 @@ library
     hs-source-dirs:   src
     default-language: Haskell2010
 
-executable optic-ml
+executable OpticML
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
@@ -41,12 +41,12 @@ executable optic-ml
     -- other-extensions:
     build-depends:
         base ^>=4.16.4.0,
-        optic-ml
+        OpticML
 
     hs-source-dirs:   examples
     default-language: Haskell2010
 
-test-suite optic-ml-test
+test-suite OpticML-test
     default-language: Haskell2010
     type:             exitcode-stdio-1.0
     hs-source-dirs:   test

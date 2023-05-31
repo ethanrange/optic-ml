@@ -1,4 +1,4 @@
-# Revision history for optic-ml
+# Revision history for OpticML
 
 ## 0.0.0.1 -- YYYY-mm-dd
 
