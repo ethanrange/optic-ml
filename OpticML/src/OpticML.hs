@@ -1,4 +1,5 @@
-module OpticML (someFunc) where
+module OpticML (
+    module Lenses
+) where
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+import OpticML.Lenses as Lenses

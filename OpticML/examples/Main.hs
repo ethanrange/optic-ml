@@ -1,8 +1,6 @@
 module Main where
-
-import qualified OpticML (someFunc)
+import OpticML
 
 main :: IO ()
 main = do
-  putStrLn "Hello, Haskell!"
-  OpticML.someFunc
+  putStrLn "Not implemented!"
