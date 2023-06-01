@@ -9,12 +9,14 @@ module OpticML.Lenses
     Optic, Lens, Lens',
     lens,
     set, over, view,
+    alongside,
     p1, p2,
   )
 where
 
 import Control.Applicative (Const (..))
 import Data.Coerce (coerce)
+import Data.Bifunctor (bimap)
 
 -- Define Profunctor and Strong / Cartesian profunctor classes
 
@@ -92,6 +94,13 @@ over = id
 view :: Optic (UpStar (Const a)) s t a b -> s -> a
 view opt = coerce (opt (UpStar Const))
 {-# INLINE view #-}
+
+-- alongside
+
+alongside :: Lens s t a b -> Lens s' t' a' b' -> Lens (s, s') (t, t') (a, a') (b, b')
+alongside l1 l2 = lens (bimap (view l1) (view l2)) u
+    where 
+      u ((b, b'), (s, s')) = (set l1 b s, set l2 b' s')
 
 -- p1 and p2 lenses
 
