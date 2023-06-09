@@ -23,7 +23,10 @@ library
     exposed-modules:  OpticML
 
     -- Modules included in this library but not exported.
-    -- other-modules:
+    other-modules:
+        OpticML.Lenses
+        OpticML.LensImpl
+        OpticML.Parametric
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
