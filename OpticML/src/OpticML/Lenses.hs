@@ -9,8 +9,7 @@ module OpticML.Lenses
     Optic, Lens, Lens',
     lens,
     set, over, view,
-    alongside,
-    p1, p2,
+    alongside
   )
 where
 
@@ -101,13 +100,3 @@ alongside :: Lens s t a b -> Lens s' t' a' b' -> Lens (s, s') (t, t') (a, a') (b
 alongside l1 l2 = lens (bimap (view l1) (view l2)) u
     where 
       u ((b, b'), (s, s')) = (set l1 b s, set l2 b' s')
-
--- p1 and p2 lenses
-
-p1 :: Lens (a, c) (b, c) a b
-p1 = lens fst $ \(n, (_, b)) -> (n, b)
-{-# INLINE p1 #-}
-
-p2 :: Lens (x, a) (x, b) a b
-p2 = lens snd $ \(n, (a, _)) -> (a, n)
-{-# INLINE p2 #-}
