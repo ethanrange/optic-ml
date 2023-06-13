@@ -32,7 +32,8 @@ library
     -- other-extensions:
     build-depends:    
         base ^>=4.16.4.0,
-        matrix
+        matrix,
+        normaldistribution
     
     hs-source-dirs:   src
     default-language: Haskell2010
@@ -47,6 +48,7 @@ executable OpticML
     -- other-extensions:
     build-depends:
         base ^>=4.16.4.0,
+        matrix,
         OpticML
 
     hs-source-dirs:   examples

@@ -1,6 +1,7 @@
 module Main where
 
-import OpticML ( view, p1, p2, alongside, Lens, Para(..), assocL, set, assocR )
+import OpticML ( Para(params, plens), dense, view, Lens, linearP, Para', Lens' )
+import Data.Matrix ( fromList, Matrix )
 
 -- main :: IO ()
 -- main = do
@@ -17,16 +18,32 @@ import OpticML ( view, p1, p2, alongside, Lens, Para(..), assocL, set, assocR )
 
 --   print (params para)
 
+-- main :: IO ()
+-- main = do
+--   let x = view assocL ((1, 2), 3)
+--   let y = set assocL (1, (2, 3)) ((1, 2), 3) 
+
+--   let a = view assocR (1, (2, 3))
+--   let b = set assocR ((1, 2), 3) (1, (2, 3))
+
+--   print x
+--   print y
+
+--   print a
+--   print b
+
 main :: IO ()
 main = do
-  let x = view assocL ((1, 2), 3)
-  let y = set assocL (1, (2, 3)) ((1, 2), 3) 
+  let x = dense (4, 3)
+  
+  let l = plens x
+  let ps = params x
 
-  let a = view assocR (1, (2, 3))
-  let b = set assocR ((1, 2), 3) (1, (2, 3))
+  let input = fromList 4 1 [4.9, 3.0 , 1.4, 0.2]
 
-  print x
-  print y
+  let res = view l (ps, input)
 
-  print a
-  print b
+  -- print ps
+  -- print (view l (ps, input))
+  print res
+  print 2
