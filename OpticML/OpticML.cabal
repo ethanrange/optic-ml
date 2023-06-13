@@ -27,6 +27,7 @@ library
         OpticML.Lenses
         OpticML.LensImpl
         OpticML.Parametric
+        OpticML.Components
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

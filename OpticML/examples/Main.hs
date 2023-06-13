@@ -41,9 +41,5 @@ main = do
 
   let input = fromList 4 1 [4.9, 3.0 , 1.4, 0.2]
 
-  let res = view l (ps, input)
-
-  -- print ps
-  -- print (view l (ps, input))
-  print res
-  print 2
+  print ps
+  print (view l (ps, input))
