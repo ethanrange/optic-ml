@@ -11,9 +11,9 @@ tests = testGroup "Testing OpticML" [lensUnitTests]
 
 lensUnitTests = testGroup "Lens Unit Tets (run via HUnit)"
     [ testCase "view p1" $
-        view p1 (1, 2) @?= 1
+        fwd p1 (1, 2) @?= 1
     , testCase "set p1" $
-        set p1 3 (1, 2) @?= (3, 2)
+        rev p1 (3, (1, 2)) @?= (3, 2)
     , testCase "over p1" $
         over p1 (+1) (1, 2) @?= (2, 2)
     ]

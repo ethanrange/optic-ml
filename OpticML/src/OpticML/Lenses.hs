@@ -8,7 +8,7 @@ module OpticML.Lenses
     UpStar (..),
     Optic, Lens, Lens',
     lens,
-    set, over, view,
+    rev, over, fwd,
     alongside
   )
 where
@@ -79,10 +79,10 @@ lens :: (s -> a) -> ((b, s) -> t) -> Lens s t a b
 lens fwd rev = dimap (\s -> (fwd s, s)) rev . first
 {-# INLINE lens #-}
 
--- set opt new orig = optic (const new) orig
-set :: Optic (->) s t a b -> b -> s -> t
-set optic = optic . const
-{-# INLINE set #-}
+-- rev opt new orig = opt (const new) orig
+rev :: Optic (->) s t a b -> (b, s) -> t
+rev opt (new, orig) = opt (const new) orig
+{-# INLINE rev #-}
 
 -- over opt fun orig = opt fun orig
 over :: Optic (->) s t a b -> (a -> b) -> s -> t
@@ -90,13 +90,13 @@ over = id
 {-# INLINE over #-}
 
 -- Coerce away newtypes of UpStar and Const functor
-view :: Optic (UpStar (Const a)) s t a b -> s -> a
-view opt = coerce (opt (UpStar Const))
-{-# INLINE view #-}
+fwd :: Optic (UpStar (Const a)) s t a b -> s -> a
+fwd opt = coerce (opt (UpStar Const))
+{-# INLINE fwd #-}
 
 -- alongside
 
 alongside :: Lens s t a b -> Lens s' t' a' b' -> Lens (s, s') (t, t') (a, a') (b, b')
-alongside l1 l2 = lens (bimap (view l1) (view l2)) u
+alongside l1 l2 = lens (bimap (fwd l1) (fwd l2)) u
     where 
-      u ((b, b'), (s, s')) = (set l1 b s, set l2 b' s')
+      u ((b, b'), (s, s')) = (rev l1 (b, s), rev l2 (b', s'))
