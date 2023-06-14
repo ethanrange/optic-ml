@@ -47,13 +47,10 @@ p2 = lens snd $ \(n, (a, _)) -> (a, n)
 -- Addition Lens
 
 add :: Num a => Lens (a, a) (a, a) a a
-add = lens v u
+add = lens v (join (,) . fst)
     where
         v :: Num i => (i, i) -> i
         v = uncurry (+)
-
-        u :: Num i => (i, (i, i)) -> (i, i)
-        u = join (,) . fst
         
 linear :: Num a => Lens (Matrix a, Matrix a) (Matrix a, Matrix a) (Matrix a) (Matrix a)
 linear = lens v u
@@ -65,7 +62,7 @@ linear = lens v u
         u (y, (m, x)) = (outer y x, multStd (transpose m) y)
 
         outer :: Num a => Matrix a -> Matrix a -> Matrix a
-        outer v1 v2 = fromLists [[u * v | v <- ex v2] | u <- ex v1]
+        outer v1 v2 = fromLists [[e1 * e2 | e2 <- ex v2] | e1 <- ex v1]
             where
                 ex :: Matrix a -> [a]
                 ex = head . toLists . transpose

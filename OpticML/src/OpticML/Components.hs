@@ -8,8 +8,7 @@ where
 import OpticML.Parametric (Para(..), Para', (|.|))
 import Data.Random.Normal ( mkNormals )
 import Data.Matrix (Matrix, zero, fromList)
-import OpticML.LensImpl (assocL, identityL, linear, add)
-import OpticML.Lenses (alongside, Lens')
+import OpticML.LensImpl (linear, add)
 
 seed :: Int
 seed = 384723978470123987

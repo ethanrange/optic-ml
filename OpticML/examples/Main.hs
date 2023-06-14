@@ -1,6 +1,8 @@
-module Main where
+module Main
+  ( main
+  ) where
 
-import OpticML ( Para(params, plens), dense, view, Lens, linearP, Para', Lens' )
+import OpticML ( Para(params, plens), dense, view, Para', Lens' )
 import Data.Matrix ( fromList, Matrix )
 
 -- main :: IO ()
@@ -34,12 +36,17 @@ import Data.Matrix ( fromList, Matrix )
 
 main :: IO ()
 main = do
-  let x = dense (4, 3)
+  let x :: Para' (Matrix Float, Matrix Float) 
+                 ((Matrix Float, Matrix Float), Matrix Float) 
+                 (Matrix Float)
+      x = dense (4, 3)
   
-  let l = plens x
+  let l :: Lens' ((Matrix Float, Matrix Float), Matrix Float) (Matrix Float)
+      l = plens x
   let ps = params x
 
-  let input = fromList 4 1 [4.9, 3.0 , 1.4, 0.2]
+  let input :: Matrix Float
+      input = fromList 4 1 [4.9, 3.0 , 1.4, 0.2]
 
   print ps
   print (view l (ps, input))
