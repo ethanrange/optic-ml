@@ -1,13 +1,19 @@
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module OpticML.LensImpl
   ( identityL,
     assocL, assocR,
     p1, p2,
     add,
-    linear
+    linear,
+    lr,
+    update,
+    mse
   )
 where
 
-import OpticML.Lenses (Lens, lens)
+import OpticML.Lenses (Lens, lens, Lens')
 import Control.Monad (join)
 import Data.Matrix
 
@@ -51,7 +57,7 @@ add = lens v (join (,) . fst)
     where
         v :: Num i => (i, i) -> i
         v = uncurry (+)
-        
+
 linear :: Num a => Lens (Matrix a, Matrix a) (Matrix a, Matrix a) (Matrix a) (Matrix a)
 linear = lens v u
     where
@@ -66,3 +72,32 @@ linear = lens v u
             where
                 ex :: Matrix a -> [a]
                 ex = head . toLists . transpose
+
+-- Learning Rate Lens
+
+lr :: Num a => Float -> Lens s Float a b
+lr e = lens (const 0) (const e)
+
+-- Update Lens
+
+update :: Num a => a -> Lens a a a a
+update e = lens id (\(x, y) -> x - e * y)
+
+-- MSE Lens
+
+mse :: forall a . Fractional a => Lens' (Matrix a, Matrix a) a
+mse = lens v u
+    where
+        hadamard :: Matrix a -> Matrix a -> Matrix a
+        hadamard = elementwise (*)
+
+        v :: (Matrix a, Matrix a) -> a
+        v (y, ey)= 0.5 * (sum . toList) diffSq
+            where
+                diffSq = join hadamard (y - ey)
+
+        u :: (a, (Matrix a, Matrix a)) -> (Matrix a, Matrix a)
+        u (l, (y, ey)) = (ldp, ldp)
+            where 
+                ldp :: Matrix a
+                ldp = mapCol (const (* l)) 0 (y - ey)
