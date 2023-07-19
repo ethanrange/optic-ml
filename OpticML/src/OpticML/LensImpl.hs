@@ -20,7 +20,7 @@ import Data.Matrix
 -- Identity Lens
 
 identityL :: Lens a a a a
-identityL = lens id snd
+identityL = lens id fst
 
 -- Associative Lenses
 
@@ -62,7 +62,7 @@ linear :: Num a => Lens (Matrix a, Matrix a) (Matrix a, Matrix a) (Matrix a) (Ma
 linear = lens v u
     where
         v :: Num a => (Matrix a, Matrix a) -> Matrix a
-        v = uncurry multStd
+        v = uncurry (*)
 
         u :: Num a => (Matrix a, (Matrix a, Matrix a)) -> (Matrix a, Matrix a)
         u (y, (m, x)) = (outer y x, multStd (transpose m) y)
@@ -75,13 +75,13 @@ linear = lens v u
 
 -- Learning Rate Lens
 
-lr :: Num a => Float -> Lens s Float a b
-lr e = lens (const 0) (const e)
+lr :: Double -> Lens s Double () ()
+lr e = lens (const ()) (const e)
 
 -- Update Lens
 
-update :: Num a => a -> Lens a a a a
-update e = lens id (\(x, y) -> x - e * y)
+update :: Num a => Lens a a a a
+update = lens id (uncurry (+))
 
 -- MSE Lens
 
@@ -97,7 +97,7 @@ mse = lens v u
                 diffSq = join hadamard (y - ey)
 
         u :: (a, (Matrix a, Matrix a)) -> (Matrix a, Matrix a)
-        u (l, (y, ey)) = (ldp, ldp)
-            where 
-                ldp :: Matrix a
-                ldp = mapCol (const (* l)) 0 (y - ey)
+        u (l, (y, ey)) = (ldp ey y, ldp y ey)
+            where
+                ldp :: Matrix a -> Matrix a -> Matrix a
+                ldp a b = mapCol (const (* l)) 1 (a - b)
