@@ -3,7 +3,7 @@ module Main
   ( main
   ) where
 
-import OpticML ( Para(..), dense, fwd, Para', Lens', rev, (|.|), linearP, mse, lr, update, add, biasP, assocL, identityL, alongside, linear, Lens, assocR, lens, liftPara )
+import OpticML ( Para(..), dense, fwd, Para', Lens', rev, (|.|), linearP, mse, lr, update, add, biasP, assocL, identityL, alongside, linear, Lens, assocR, lens, liftPara, relu, sigmoid )
 import Data.Matrix ( fromList, Matrix (nrows, ncols), fromLists )
 import Data.Bifunctor ( bimap )
 import Control.Monad (join)
@@ -172,10 +172,10 @@ testModel = do
   -- let res = fwd (plens pl) (m, x) -- [50 122]
   -- let res = rev (plens pl) (loss, (m, x)) -- ([[70, 80, 90], [140, 160, 180]], [90, 120, 150])
 
-  let pl :: Para' (Matrix Double, Matrix Double) ((Matrix Double, Matrix Double), Matrix Double) (Matrix Double)
-      pl = dense (5, 3)
-  -- let res = fwd (plens pl) ((b, m), x) -- [150, 222]
-  let res = rev (plens pl) (loss, ((b, m), x))
+  let pl :: Para' (Matrix Double, (Matrix Double, Matrix Double)) (((), (Matrix Double, Matrix Double)), Matrix Double) (Matrix Double)
+      pl = dense (5, 3) identityL
+  -- let res = fwd (plens pl) (((), (b, m)), x) -- [150, 222]
+  let res = rev (plens pl) (loss, (((), (b, m)), x))
 
   print res
   -- print (params pl)
@@ -217,5 +217,29 @@ testLoss = do
 
   print res
 
+testActivation :: IO ()
+testActivation = do
+  let m :: Matrix Double
+      m = fromLists [[0.01, -0.02, 0.03], [0.04, 0.05, -0.06]]
+
+  let x :: Matrix Double
+      x = fromList 3 1 [-0.07, 0.08, 0.09]
+
+  let y :: Matrix Double
+      y = fromList 2 1 [0.0004, -0.0042]
+
+  let b :: Matrix Double
+      b = fromList 2 1 [1.0, 1.0]
+
+  let loss :: Matrix Double
+      loss = fromList 2 1 [0.1, 0.2]
+
+  let pl :: Para' (Matrix Double, (Matrix Double, Matrix Double)) (((), (Matrix Double, Matrix Double)), Matrix Double) (Matrix Double)
+      pl = dense (5, 3) sigmoid
+  -- let res = fwd (plens pl) (((), (b, m)), x)
+  let res = rev (plens pl) (loss, (((), (b, m)), x))
+
+  print res
+
 main :: IO ()
-main = testLoss
+main = testModel
