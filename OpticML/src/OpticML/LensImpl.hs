@@ -9,7 +9,8 @@ module OpticML.LensImpl
     linear,
     lr,
     update,
-    mse
+    mse,
+    relu, sigmoid
   )
 where
 
@@ -101,3 +102,26 @@ mse = lens v u
             where
                 ldp :: Matrix a -> Matrix a -> Matrix a
                 ldp a b = mapCol (const (* l)) 1 (a - b)
+
+-- Activation lenses
+
+relu :: forall a . (Num a, Ord a) => Lens' (Matrix a) (Matrix a)
+relu = lens v u
+    where
+        v :: Matrix a -> Matrix a
+        v = mapCol (const (max 0)) 1
+
+        u :: (Matrix a, Matrix a) -> Matrix a
+        u (dy, x) = mapCol (\r yv -> if getElem r 1 x > 0 then yv else 0) 1 dy
+
+sig :: Floating a => a -> a
+sig x = 1 / (1 + exp (-x))
+
+sigmoid :: forall a . Floating a => Lens' (Matrix a) (Matrix a)
+sigmoid = lens v u
+    where
+        v :: Matrix a -> Matrix a
+        v = mapCol (const sig) 1
+
+        u :: (Matrix a, Matrix a) -> Matrix a
+        u (dy, s) = mapCol (\r x -> sig x * (1 - sig x) * getElem r 1 dy) 1 s
