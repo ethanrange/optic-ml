@@ -1,4 +1,5 @@
 {-# LANGUAGE RankNTypes #-}
+
 module OpticML.Components
   ( dense,
     linearP,

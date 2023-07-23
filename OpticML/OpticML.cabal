@@ -62,13 +62,20 @@ executable OpticML
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    -- other-modules:
+    other-modules:
+        Iris
+        Playground.Assorted
+        Playground.ComponentTests
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     build-depends:
         base ^>=4.16.4.0,
         matrix,
+        bytestring >= 0.11.3.1,
+        cassava >= 0.5.3.0,
+        vector >= 0.13.0.0,
+        ansi-terminal >= 1.0,
         OpticML
 
     hs-source-dirs:   examples

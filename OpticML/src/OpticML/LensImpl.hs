@@ -66,7 +66,7 @@ linear = lens v u
         v = uncurry (*)
 
         u :: Num a => (Matrix a, (Matrix a, Matrix a)) -> (Matrix a, Matrix a)
-        u (y, (m, x)) = (outer y x, multStd (transpose m) y)
+        u (y, (m, x)) = (outer y x, transpose m * y)
 
         outer :: Num a => Matrix a -> Matrix a -> Matrix a
         outer v1 v2 = fromLists [[e1 * e2 | e2 <- ex v2] | e1 <- ex v1]
