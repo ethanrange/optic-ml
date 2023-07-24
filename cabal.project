@@ -1,1 +1,2 @@
 packages: OpticML/OpticML.cabal
+optimization: 2
