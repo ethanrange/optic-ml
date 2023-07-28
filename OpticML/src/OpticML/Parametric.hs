@@ -2,17 +2,18 @@
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE DerivingStrategies #-}
 
 module OpticML.Parametric
   ( Para(..), Para',
     liftPara,
-    composePara, (|.|)
+    composePara, (|.|),
+    EmptyParam(..)
   )
 where
 
 import OpticML.Lenses (Lens, alongside)
 import OpticML.LensImpl (p2, assocL, identityL)
-import Data.Matrix (Matrix, fromLists)
 
 data Para p s t a b = Para
     { params :: p
@@ -20,6 +21,8 @@ data Para p s t a b = Para
     }
 
 type Para' p s a = Para p s s a a
+
+data EmptyParam = EmptyParam deriving stock Show
 
 instance (Num a, Num b) => Num (a,b) where
   fromInteger n   = (fromInteger n, fromInteger n)
@@ -30,22 +33,27 @@ instance (Num a, Num b) => Num (a,b) where
   abs (a, b) = (abs a, abs b)
   signum (a, b) = (signum a, signum b)
 
-liftPara :: Lens s t a b -> Para (Matrix p) (c, s) (c, t) a b
-liftPara l = Para (fromLists [[]]) (p2 . l)
+instance Num EmptyParam where
+  fromInteger _ = EmptyParam
+  (+) _ _       = EmptyParam
+  (-) _ _       = EmptyParam
+  (*) _ _       = EmptyParam
+  negate        = const EmptyParam
+  abs           = const EmptyParam
+  signum        = const EmptyParam
 
-composePara :: forall p s1 s2 a b m n c q .
-                                            Para p (s1, s2) (s1, s2) a b
-                                        ->  Para q (c, a) (c, b) m n
-                                        ->  Para (q, p) ((c, s1), s2) ((c, s1), s2) m n
-composePara (Para p l1) (Para q l2) = Para cp cl
+liftPara :: Lens s t a b -> Para EmptyParam (c, s) (c, t) a b
+liftPara l = Para EmptyParam (p2 . l)
+
+composePara :: forall p s a b m n q t . Para p (p, s) (p, t) a b
+                                     -> Para q (q, a) (q, b) m n
+                                     -> Para (q, p) ((q, p), s) ((q, p), t) m n
+composePara (Para p l1) (Para q l2) = Para (q, p) cl
     where
-        cp :: (q, p)
-        cp = (q, p)
-
-        cl :: Lens ((c, s1), s2) ((c, s1), s2) m n
+        cl :: Lens ((q, p), s) ((q, p), t) m n
         cl = assocL . (identityL `alongside` l1) . l2
 
-(|.|) :: Para p (s1, s2) (s1, s2) a b
-                        -> Para q (c, a) (c, b) m n
-                        -> Para (q, p) ((c, s1), s2) ((c, s1), s2) m n
+(|.|) :: Para p (p, s) (p, t) a b
+      -> Para q (q, a) (q, b) m n
+      -> Para (q, p) ((q, p), s) ((q, p), t) m n
 p |.| q = p `composePara` q

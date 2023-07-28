@@ -4,15 +4,15 @@
 module Playground.ComponentTests where
 
 import Data.Matrix (Matrix, fromLists, fromList)
-import OpticML (Para', Lens, Lens', Para(..), dense, identityL, rev, lr, liftPara, mse, sigmoid, update, alongside, (|.|))
+import OpticML (Para', Lens, Lens', Para(..), dense, identityL, rev, lr, liftPara, mse, sigmoid, update, alongside, (|.|), EmptyParam(..))
 
-type ModelParam = (Matrix Double, (Matrix Double, Matrix Double))
+type ModelParam = (EmptyParam, (Matrix Double, Matrix Double))
 type Result = Matrix Double
 type Input = Matrix Double
 type Expected = Matrix Double
 type Loss = Double
 
-type LRParam = Matrix Double
+type LRParam = EmptyParam
 type LossParam = Matrix Double
 type LearnerParam = ((LRParam, LossParam), ModelParam)
 
@@ -55,7 +55,7 @@ testModel = do
   let pl :: Para' ModelParam (ModelParam, Input) Result
       pl = dense (5, 3) identityL
   -- let res = fwd (plens pl) (((), (b, m)), x) -- [150, 222]
-  let res = rev (plens pl) (loss, ((fromLists [[]], (b, m)), x))
+  let res = rev (plens pl) (loss, ((EmptyParam, (b, m)), x))
 
   print res
 
@@ -118,7 +118,7 @@ testActivation = do
   let pl :: Para' ModelParam (ModelParam, Input) Result
       pl = dense (5, 3) sigmoid
   -- let res = fwd (plens pl) (((), (b, m)), x)
-  let res = rev (plens pl) (loss, ((fromLists [[]], (b, m)), x))
+  let res = rev (plens pl) (loss, ((EmptyParam, (b, m)), x))
 
   print res
 

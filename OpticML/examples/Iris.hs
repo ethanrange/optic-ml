@@ -6,7 +6,7 @@ import qualified Data.ByteString.Lazy as BSL
 import Data.Csv ( decode, HasHeader(HasHeader) )
 import qualified Data.Vector as V
 
-import OpticML (Para', Para(..), dense, sigmoid, update, alongside, liftPara, lr, mse, (|.|), rev, fwd)
+import OpticML (Para', Para(..), dense, sigmoid, update, alongside, liftPara, lr, mse, (|.|), rev, fwd, EmptyParam(..))
 import Data.Matrix (Matrix, colVector, zero, setElem, fromLists, toList)
 import qualified Data.List as DL
 
@@ -18,15 +18,17 @@ type IrisData = (Double, Double, Double, Double, String)
 type Features = Matrix Double
 type Label = Matrix Double
 
-type ModelParam = (Matrix Double, (Matrix Double, Matrix Double))
+type LRParam = EmptyParam
+type LossParam = Matrix Double
+type ActParam = EmptyParam
+
+type ModelParam = (ActParam, (Matrix Double, Matrix Double))
+type LearnerParam = ((LRParam, LossParam), ModelParam)
+
 type Result = Matrix Double
 type Input = Matrix Double
 type Expected = Matrix Double
 type Loss = Double
-
-type LRParam = Matrix Double
-type LossParam = Matrix Double
-type LearnerParam = ((LRParam, LossParam), ModelParam)
 
 type Model = Para' ModelParam (ModelParam, Input) Result
 type Learner = Para' LearnerParam (LearnerParam, Input) ()

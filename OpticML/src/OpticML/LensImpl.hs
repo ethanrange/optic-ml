@@ -33,11 +33,11 @@ assocLfwd ((x, y), z) = (x, (y, z))
 assocRfwd :: (a, (b, c)) -> ((a, b), c)
 assocRfwd (x, (y, z)) = ((x, y), z)
 
-assocL :: Lens ((a, b), c) ((a, b), c) (a, (b, c)) (a, (b, c))
+assocL :: Lens ((a, b), c) ((d, e), f) (a, (b, c)) (d, (e, f))
 assocL = lens assocLfwd (assocRfwd . fst)
 {-# INLINE assocL #-}
 
-assocR :: Lens (a, (b, c)) (a, (b, c)) ((a, b), c) ((a, b), c)
+assocR :: Lens (a, (b, c)) (d, (e, f)) ((a, b), c) ((d, e), f)
 assocR = lens assocRfwd (assocLfwd . fst)
 {-# INLINE assocR #-}
 

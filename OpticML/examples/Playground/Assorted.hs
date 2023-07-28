@@ -5,7 +5,7 @@ module Playground.Assorted where
 
 import Control.Monad (join)
 import Data.Matrix (Matrix (..), fromList, fromLists)
-import OpticML (Lens, Lens', Para (..), Para', alongside, assocL, assocR, biasP, dense, fwd, identityL, lens, linearP, lr, mse, p1, p2, rev, (|.|))
+import OpticML (Lens, Lens', Para (..), Para', alongside, assocL, assocR, biasP, dense, fwd, identityL, lens, linearP, lr, mse, p1, p2, rev, (|.|), EmptyParam)
 
 testProj :: IO ()
 testProj = do
@@ -43,12 +43,12 @@ testDense :: IO ()
 testDense = do
   let x ::
         Para'
-          (Matrix Double, (Matrix Double, Matrix Double))
-          ((Matrix Double, (Matrix Double, Matrix Double)), Matrix Double)
+          (EmptyParam, (Matrix Double, Matrix Double))
+          ((EmptyParam, (Matrix Double, Matrix Double)), Matrix Double)
           (Matrix Double)
       x = dense (4, 3) identityL
 
-  let l :: Lens' ((Matrix Double, (Matrix Double, Matrix Double)), Matrix Double) (Matrix Double)
+  let l :: Lens' ((EmptyParam, (Matrix Double, Matrix Double)), Matrix Double) (Matrix Double)
       l = plens x
   let ps = params x
 
@@ -64,7 +64,10 @@ testDense = do
 
 testDense' :: IO ()
 testDense' = do
-  let Para ps ln = dense (4, 2) identityL |.| linearP (2, 3) |.| dense (3, 5) identityL
+  let p :: Para' ((EmptyParam, (Matrix Double, Matrix Double)), (Matrix Double, (EmptyParam, (Matrix Double, Matrix Double)))) 
+           (((EmptyParam, (Matrix Double, Matrix Double)), (Matrix Double, (EmptyParam, (Matrix Double, Matrix Double)))), Matrix Double)
+           (Matrix Double)
+      p@(Para ps ln) = dense (4, 2) identityL |.| linearP (2, 3) |.| dense (3, 5) identityL
   let input = fromList 4 1 [4.9, 3.0, 1.4, 0.2]
 
   print (fwd ln (ps, input))
@@ -84,7 +87,7 @@ testMSE = do
 
 testPipeline :: IO ()
 testPipeline = do
-  let model :: Para' (Matrix Double, (Matrix Double, Matrix Double)) ((Matrix Double, (Matrix Double, Matrix Double)), Matrix Double) (Matrix Double)
+  let model :: Para' (EmptyParam, (Matrix Double, Matrix Double)) ((EmptyParam, (Matrix Double, Matrix Double)), Matrix Double) (Matrix Double)
       model = dense (4, 3) identityL
   -- let umodel :: Lens' ((Matrix Double, Matrix Double), Matrix Double) (Matrix Double)
   --     umodel = update >> plens model
@@ -112,10 +115,11 @@ testPipeline = do
 
 testPipeline' :: IO ()
 testPipeline' = do
-  let q :: Para' (Matrix Double, (Matrix Double, Matrix Double)) ((Matrix Double, (Matrix Double, Matrix Double)), Matrix Double) (Matrix Double)
+  let q :: Para' (EmptyParam, (Matrix Double, Matrix Double)) ((EmptyParam, (Matrix Double, Matrix Double)), Matrix Double) (Matrix Double)
       q = dense (2, 2) identityL
 
-  let j = linearP (2, 2)
+  let j :: Para' (Matrix Double) (Matrix Double, Matrix Double) (Matrix Double)
+      j = linearP (2, 2)
   let s = biasP 2
 
   let bp = fromList 2 1 [1, 1]
@@ -145,3 +149,26 @@ testPipeline' = do
 
   --   print r
   print 1
+
+-- x :: Para p (p, s) (p, t) a b
+-- x = undefined
+
+-- y :: Para q (q, a) (q, b) m n
+-- y = undefined
+
+-- z :: Para r (r, m) (r, n) i j
+-- z = undefined
+
+-- yz :: Para (r, q) ((r, q), a) ((r, q), b) i j
+-- yz = y |.| z
+
+-- xy :: Para (q, p) ((q, p), s) ((q, p), t) m n
+-- xy = x |.| y
+
+-- xyz1 :: Para (r, (q, p)) ((r, (q, p)), s) ((r, (q, p)), t) i j
+-- xyz1 = xy |.| z
+-- xyz2 :: Para ((r, q), p) (((r, q), p), s) (((r, q), p), t) i j
+-- xyz2 = x |.| yz
+
+-- xyz1 = (assocR `alongside` id) . plens xyz2
+-- xyz2 = (assocL `alongside` id) . plens xyz1

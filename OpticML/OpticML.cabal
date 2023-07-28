@@ -34,7 +34,8 @@ library
     build-depends:    
         base ^>=4.16.4.0,
         matrix,
-        normaldistribution
+        normaldistribution,
+        random
     
     hs-source-dirs:   src
     default-language: Haskell2010
