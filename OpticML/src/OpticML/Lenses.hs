@@ -2,6 +2,8 @@
 {-# LANGUAGE QuantifiedConstraints #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DerivingStrategies #-}
 
 module OpticML.Lenses
   ( Profunctor (..), Strong (..),
@@ -14,7 +16,6 @@ module OpticML.Lenses
 where
 
 import Control.Applicative (Const (..))
-import Data.Coerce (coerce)
 import Data.Bifunctor (bimap)
 
 -- Define Profunctor and Strong / Cartesian profunctor classes
@@ -28,12 +29,7 @@ class Profunctor p => Strong p where
 
 -- Define UpStar
 
-newtype UpStar f a b = UpStar {unUpStar :: a -> f b}
-
-instance Functor f => Functor (UpStar f x) where
-  fmap :: (a -> b) -> UpStar f x a -> UpStar f x b
-  fmap k (UpStar f) = UpStar (fmap k . f)
-  {-# INLINE fmap #-}
+newtype UpStar f a b = UpStar {unUpStar :: a -> f b} deriving stock Functor
 
 instance Functor f => Profunctor (UpStar f) where
   dimap :: (s -> a) -> (b -> t) -> UpStar f a b -> UpStar f s t
@@ -76,7 +72,7 @@ type Lens' s a = Lens s s a a
 -- Smart constructor for lenses
 
 lens :: (s -> a) -> ((b, s) -> t) -> Lens s t a b
-lens fwd rev = dimap (\s -> (fwd s, s)) rev . first
+lens f r = dimap (\s -> (f s, s)) r . first
 {-# INLINE lens #-}
 
 -- rev opt new orig = opt (const new) orig
@@ -90,8 +86,8 @@ over = id
 {-# INLINE over #-}
 
 -- Coerce away newtypes of UpStar and Const functor
-fwd :: Optic (UpStar (Const a)) s t a b -> s -> a
-fwd opt = coerce (opt (UpStar Const))
+fwd :: Optic (UpStar (Const a)) s t a b -> (s -> a)
+fwd opt = getConst . unUpStar (opt (UpStar Const))
 {-# INLINE fwd #-}
 
 -- alongside
