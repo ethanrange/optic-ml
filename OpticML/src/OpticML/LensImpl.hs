@@ -66,13 +66,7 @@ linear = lens v u
         v = uncurry (*)
 
         u :: Num a => (Matrix a, (Matrix a, Matrix a)) -> (Matrix a, Matrix a)
-        u (y, (m, x)) = (outer y x, transpose m * y)
-
-        outer :: Num a => Matrix a -> Matrix a -> Matrix a
-        outer v1 v2 = fromLists [[e1 * e2 | e2 <- ex v2] | e1 <- ex v1]
-            where
-                ex :: Matrix a -> [a]
-                ex = head . toLists . transpose
+        u (y, (m, x)) = (y * transpose x, transpose m * y)
 
 -- Learning Rate Lens
 
@@ -98,10 +92,7 @@ mse = lens v u
                 diffSq = join hadamard (y - ey)
 
         u :: (a, (Matrix a, Matrix a)) -> (Matrix a, Matrix a)
-        u (l, (y, ey)) = (ldp ey y, ldp y ey)
-            where
-                ldp :: Matrix a -> Matrix a -> Matrix a
-                ldp a b = mapCol (const (* l)) 1 (a - b)
+        u (l, (y, ey)) = (fromLists [[]], mapCol (const (* l)) 1 (y - ey))
 
 -- Activation lenses
 
