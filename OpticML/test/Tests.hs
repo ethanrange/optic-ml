@@ -151,7 +151,7 @@ pipelineUnitTests = testGroup "Pipeline Unit Tets (run via HUnit)"
 
         ey :: Vector Double
         ey = fromList [1.0, 0, 0]
-
+        
         mwu :: Para' ModelParam (ModelParam, Input) Result
         mwu = Para (params model) ((update `alongside` id) . plens model)
 
