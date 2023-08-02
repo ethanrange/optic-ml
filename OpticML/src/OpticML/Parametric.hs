@@ -22,7 +22,7 @@ data Para p s t a b = Para
 
 type Para' p s a = Para p s s a a
 
-data EmptyParam = EmptyParam deriving stock Show
+data EmptyParam = EmptyParam deriving stock (Show, Eq)
 
 instance (Num a, Num b) => Num (a,b) where
   fromInteger n   = (fromInteger n, fromInteger n)
