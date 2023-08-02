@@ -145,13 +145,13 @@ pipelineUnitTests = testGroup "Pipeline Unit Tets (run via HUnit)"
     where
         model :: Para' ModelParam (ModelParam, Input) Result
         model = dense (4, 3) sigmoid
-
+        
         x :: Input
         x = fromList [-0.07, 0.08, 0.09, 0.06]
 
         ey :: Vector Double
         ey = fromList [1.0, 0, 0]
-        
+
         mwu :: Para' ModelParam (ModelParam, Input) Result
         mwu = Para (params model) ((update `alongside` id) . plens model)
 
