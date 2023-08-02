@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Iris
     ( runPipeline
     ) where
@@ -13,6 +15,10 @@ import qualified Data.List as DL
 import Data.List (maximumBy)
 import Data.Ord (comparing)
 import Data.Maybe ( fromJust, fromMaybe )
+
+import Data.Array.MArray (newListArray, readArray, writeArray)
+import System.Random (randomRIO)
+import Data.Array.IO (IOArray)
 
 type IrisData = (Double, Double, Double, Double, String)
 type Features = Vector Double
@@ -35,11 +41,24 @@ type Learner = Para' LearnerParam (LearnerParam, Input) ()
 
 type OHClassMap = [(String, Int)]
 
+shuffle :: [a] -> IO [a]
+shuffle xs =
+    do
+    input :: IOArray Int a <- newListArray (1, n) xs
+    mapM (\i -> do
+        j <- randomRIO (i,n)
+        iv <- readArray input i
+        jv <- readArray input j
+        writeArray input j iv
+        return jv) [1..n]
+    where
+        n = length xs
+
 ohMap :: OHClassMap
 ohMap = [("Iris-setosa", 0), ("Iris-versicolor", 1), ("Iris-virginica", 2)]
 
 oneHot :: [(String, Int)] -> String -> Label
-oneHot opts c = accum (konst 0 3) (const id) [(look c opts, 1.0)]
+oneHot opts c = accum (konst 0 3) const [(look c opts, 1.0)]
     where
         look :: String -> OHClassMap -> Int
         look = (.) fromJust . DL.lookup
@@ -62,8 +81,9 @@ runStep lrn (fs, ey) = nM
         -- (((nPlr, nPmse), nM), x')
         (((_, _), nM), _) = rev (plens lrn) ((), input)
 
-runEpoch :: ModelParam -> [(Features, Label)] -> ModelParam
-runEpoch = foldl (runStep . (fst . constructLearner) . Just)
+runEpoch :: ModelParam -> [(Features, Label)] -> IO ModelParam
+runEpoch mp td = do
+    foldl (runStep . (fst . constructLearner) . Just) mp <$> shuffle td
 
 constructLearner :: Maybe ModelParam -> (Learner, ModelParam)
 constructLearner omp = (mwu |.| (loss |.| cap), mp)
@@ -95,18 +115,22 @@ accuracy td mp = fromIntegral (length matches) / fromIntegral (length td)
         compute fs = fwd (plens mod) (mp, fs)
         matches = filter (\(fs, l) -> argMax (compute fs) == argMax l) td
 
+-- Monadic version of scanl
+scanM :: (Monad m) => (a -> b -> m a) -> a -> [b] -> m [a]
+scanM _ q []       = return [q]
+scanM f q (x : xs) = do (q :) <$> (f q x >>= \t -> scanM f t xs)
+
 runLearning :: Int -> [(Features, Label)] -> IO ()
 runLearning epochs td = do
     let (_, mp) = constructLearner Nothing
-    let params :: [(Int, ModelParam)]
-        params = zip [1..] $ iterate (`runEpoch` td) mp
+    params <- zip [1..] <$> scanM runEpoch mp (replicate epochs td)
 
     let printAcc :: (Int, ModelParam) -> IO ()
         printAcc (e, m) = putStrLn $  "epoch "               ++ show e 
                                  ++ "\ttraining accuracy " ++ show (accuracy td m)
 
     putStr "training..."
-    mapM_ printAcc (take epochs params)
+    mapM_ printAcc params
 
 runPipeline :: Int -> String -> IO ()
 runPipeline epochs fp = do
