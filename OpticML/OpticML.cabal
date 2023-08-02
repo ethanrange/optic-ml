@@ -110,6 +110,6 @@ test-suite OpticML-test
         base ^>=4.16.4.0,
         tasty,
         tasty-hunit,
-        matrix,
+        hmatrix >= 0.20.2,
         OpticML
 
