@@ -3,17 +3,17 @@
 
 module Playground.ComponentTests where
 
-import Data.Matrix (Matrix, fromLists, fromList)
-import OpticML (Para', Lens, Lens', Para(..), dense, identityL, rev, lr, liftPara, mse, sigmoid, update, alongside, (|.|), EmptyParam(..))
+import Numeric.LinearAlgebra (Matrix, fromLists, Vector, fromList)
+import OpticML (Para', Lens, Lens', Para(..), dense, identityL, rev, lr, liftPara, mse, sigmoid, update, alongside, (|.|), EmptyParam(..), fwd, linearP)
 
-type ModelParam = (EmptyParam, (Matrix Double, Matrix Double))
-type Result = Matrix Double
-type Input = Matrix Double
-type Expected = Matrix Double
+type ModelParam = (EmptyParam, (Vector Double, Matrix Double))
+type Result = Vector Double
+type Input = Vector Double
+type Expected = Vector Double
 type Loss = Double
 
 type LRParam = EmptyParam
-type LossParam = Matrix Double
+type LossParam = Vector Double
 type LearnerParam = ((LRParam, LossParam), ModelParam)
 
 testModel :: IO ()
@@ -25,17 +25,17 @@ testModel = do
             [4, 5, 6]
           ]
 
-  let x :: Matrix Double
-      x = fromList 3 1 [7, 8, 9]
+  let x :: Vector Double
+      x = fromList [7, 8, 9]
 
-  let y :: Matrix Double
-      y = fromList 2 1 [150, 222]
+  let y :: Vector Double
+      y = fromList [150, 222]
 
-  let b :: Matrix Double
-      b = fromList 2 1 [100, 100]
+  let b :: Vector Double
+      b = fromList [100, 100]
 
-  let loss :: Matrix Double
-      loss = fromList 2 1 [10, 20]
+  let loss :: Vector Double
+      loss = fromList [10, 20]
 
   let m' :: Matrix Double
       m' =
@@ -44,83 +44,88 @@ testModel = do
             [140, 160, 180]
           ]
 
-  let x' :: Matrix Double
-      x' = fromList 3 1 [90, 120, 150]
+  let x' :: Vector Double
+      x' = fromList [90, 120, 150]
 
-  -- let pl :: Para' (Matrix Double) (Matrix Double, Matrix Double) (Matrix Double)
-  --     pl = linearP (3, 2)
-  -- let res = fwd (plens pl) (m, x) -- [50 122]
-  -- let res = rev (plens pl) (loss, (m, x)) -- ([[70, 80, 90], [140, 160, 180]], [90, 120, 150])
+  let pl1 :: Para' (Matrix Double) (Matrix Double, Vector Double) (Vector Double)
+      pl1 = linearP (3, 2)
+  let res1 = fwd (plens pl1) (m, x) -- [50 122]
+  let res2 = rev (plens pl1) (loss, (m, x)) -- ([[70, 80, 90], [140, 160, 180]], [90, 120, 150])
 
-  let pl :: Para' ModelParam (ModelParam, Input) Result
-      pl = dense (5, 3) identityL
-  -- let res = fwd (plens pl) (((), (b, m)), x) -- [150, 222]
-  let res = rev (plens pl) (loss, ((EmptyParam, (b, m)), x))
+  let pl2 :: Para' ModelParam (ModelParam, Input) Result
+      pl2 = dense (5, 3) identityL
+  let res3 = fwd (plens pl2) ((EmptyParam, (b, m)), x) -- [150, 222]
+  let res4 = rev (plens pl2) (loss, ((EmptyParam, (b, m)), x))
 
-  print res
+  print res1
+  print res2
+  print res3
+  print res4
 
 -- print (params pl)
 
 testCap :: IO ()
 testCap = do
-  let loss :: Matrix Double
-      loss = fromList 2 1 [10, 20]
+  let loss :: Vector Double
+      loss = fromList [10, 20]
 
   let l :: Lens s Double () ()
       l = lr 0.01
   let pc = liftPara l
 
-  -- let res = fwd (plens pc) (params pc, loss) -- ()
-  let res = rev (plens pc) ((), (loss, ()))
+  let res1 = fwd (plens pc) (params pc, loss) -- ()
+  let res2 = rev (plens pc) ((), (loss, ())) -- (loss, 0.01)
 
-  print res
-  print 1
+  print res1
+  print res2
 
 testLoss :: IO ()
 testLoss = do
-  let y :: Matrix Double
-      y = fromList 2 1 [150, 222]
+  let y :: Vector Double
+      y = fromList [150, 222]
 
-  let ey :: Matrix Double
-      ey = fromList 2 1 [140, 202]
+  let ey :: Vector Double
+      ey = fromList [140, 202]
 
-  let l :: Fractional a => Lens' (Matrix a, Matrix a) a
+  let l :: Lens' (Vector Double, Vector Double) Double
       l = mse
 
   let lr :: Double
       lr = -0.01
 
-  let pl :: Fractional a => Para' (Matrix Double) (Matrix a, Matrix a) a
-      pl = Para (fromLists [[]]) l
+  let pl :: Para' (Vector Double) (Vector Double, Vector Double) Double
+      pl = Para (fromList []) l
 
-  -- let res = fwd (plens pl) (y, ey)
-  let res = rev (plens pl) (lr, (y, ey))
+  let res1 = fwd (plens pl) (y, ey)
+  let res2 = rev (plens pl) (lr, (y, ey))
 
-  print res
+  print res1
+  print res2
 
 testActivation :: IO ()
 testActivation = do
   let m :: Matrix Double
       m = fromLists [[0.01, -0.02, 0.03], [0.04, 0.05, -0.06]]
 
-  let x :: Matrix Double
-      x = fromList 3 1 [-0.07, 0.08, 0.09]
+  let x :: Vector Double
+      x = fromList [-0.07, 0.08, 0.09]
 
-  let y :: Matrix Double
-      y = fromList 2 1 [0.0004, -0.0042]
+  let y :: Vector Double
+      y = fromList [0.0004, -0.0042]
 
-  let b :: Matrix Double
-      b = fromList 2 1 [1.0, 1.0]
+  let b :: Vector Double
+      b = fromList [1.0, 1.0]
 
-  let loss :: Matrix Double
-      loss = fromList 2 1 [0.1, 0.2]
+  let loss :: Vector Double
+      loss = fromList [0.1, 0.2]
 
   let pl :: Para' ModelParam (ModelParam, Input) Result
       pl = dense (5, 3) sigmoid
-  -- let res = fwd (plens pl) (((), (b, m)), x)
-  let res = rev (plens pl) (loss, ((EmptyParam, (b, m)), x))
+  let res1 = fwd (plens pl) ((EmptyParam, (b, m)), x)
+  let res2 = rev (plens pl) (loss, ((EmptyParam, (b, m)), x))
 
-  print res
+  print res1
+  print res2
 
 testPipeline :: IO ()
 testPipeline = do
@@ -128,10 +133,10 @@ testPipeline = do
       model = dense (4, 3) sigmoid
 
   let x :: Input
-      x = fromList 4 1 [-0.07, 0.08, 0.09, 0.06]
+      x = fromList [-0.07, 0.08, 0.09, 0.06]
 
-  let ey :: Matrix Double
-      ey = fromList 3 1 [1.0, 0, 0]
+  let ey :: Vector Double
+      ey = fromList [1.0, 0, 0]
 
   let mwu :: Para' ModelParam (ModelParam, Input) Result
       mwu = Para (params model) ((update `alongside` id) . plens model)
@@ -140,7 +145,7 @@ testPipeline = do
       cap = liftPara $ lr 0.01
 
   let loss :: Para LossParam (Result, Expected) (Result, Result) Loss Double
-      loss = Para (fromLists [[]]) mse
+      loss = Para (fromList []) mse
 
   let learner :: Para' LearnerParam (LearnerParam, Input) ()
       learner = mwu |.| (loss |.| cap)
