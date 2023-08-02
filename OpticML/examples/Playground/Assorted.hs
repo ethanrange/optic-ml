@@ -4,7 +4,7 @@
 module Playground.Assorted where
 
 import Control.Monad (join)
-import Data.Matrix (Matrix (..), fromList, fromLists)
+import Numeric.LinearAlgebra (Matrix, rows, cols, Vector, fromList, size, fromLists)
 import OpticML (Lens, Lens', Para (..), Para', alongside, assocL, assocR, biasP, dense, fwd, identityL, lens, linearP, lr, mse, p1, p2, rev, (|.|), EmptyParam)
 
 testProj :: IO ()
@@ -37,26 +37,26 @@ testAssoc = do
   print b
 
 shape :: Matrix a -> (Int, Int)
-shape m = (nrows m, ncols m)
+shape m = (rows m, cols m)
 
 testDense :: IO ()
 testDense = do
   let x ::
         Para'
-          (EmptyParam, (Matrix Double, Matrix Double))
-          ((EmptyParam, (Matrix Double, Matrix Double)), Matrix Double)
-          (Matrix Double)
+          (EmptyParam, (Vector Double, Matrix Double))
+          ((EmptyParam, (Vector Double, Matrix Double)), Vector Double)
+          (Vector Double)
       x = dense (4, 3) identityL
 
-  let l :: Lens' ((EmptyParam, (Matrix Double, Matrix Double)), Matrix Double) (Matrix Double)
+  let l :: Lens' ((EmptyParam, (Vector Double, Matrix Double)), Vector Double) (Vector Double)
       l = plens x
   let ps = params x
 
-  let input :: Matrix Double
-      input = fromList 4 1 [4.9, 3.0, 1.4, 0.2]
+  let input :: Vector Double
+      input = fromList [4.9, 3.0, 1.4, 0.2]
 
   --   print (bimap shape shape ps)
-  print (shape input)
+  print (size input)
 
   print ps
   print (fwd l (ps, input))
@@ -64,22 +64,22 @@ testDense = do
 
 testDense' :: IO ()
 testDense' = do
-  let p :: Para' ((EmptyParam, (Matrix Double, Matrix Double)), (Matrix Double, (EmptyParam, (Matrix Double, Matrix Double)))) 
-           (((EmptyParam, (Matrix Double, Matrix Double)), (Matrix Double, (EmptyParam, (Matrix Double, Matrix Double)))), Matrix Double)
-           (Matrix Double)
+  let p :: Para' ((EmptyParam, (Vector Double, Matrix Double)), (Matrix Double, (EmptyParam, (Vector Double, Matrix Double))))
+                 (((EmptyParam, (Vector Double, Matrix Double)), (Matrix Double, (EmptyParam, (Vector Double, Matrix Double)))), Vector Double)
+                 (Vector Double)
       p@(Para ps ln) = dense (4, 2) identityL |.| linearP (2, 3) |.| dense (3, 5) identityL
-  let input = fromList 4 1 [4.9, 3.0, 1.4, 0.2]
+  let input = fromList [4.9, 3.0, 1.4, 0.2]
 
   print (fwd ln (ps, input))
 
 testMSE :: IO ()
 testMSE = do
-  let x :: Matrix Double
-      x = fromList 4 1 [4.9, 3.0, 1.4, 0.2]
-  let y :: Matrix Double
-      y = fromList 4 1 [4.4, 3.5, 1.4, 0.7]
+  let x :: Vector Double
+      x = fromList [4.9, 3.0, 1.4, 0.2]
+  let y :: Vector Double
+      y = fromList [4.4, 3.5, 1.4, 0.7]
 
-  let l :: Lens' (Matrix Double, Matrix Double) ()
+  let l :: Lens' (Vector Double, Vector Double) ()
       l = mse . lr 1.0
 
   print (fwd mse (x, y))
@@ -87,16 +87,19 @@ testMSE = do
 
 testPipeline :: IO ()
 testPipeline = do
-  let model :: Para' (EmptyParam, (Matrix Double, Matrix Double)) ((EmptyParam, (Matrix Double, Matrix Double)), Matrix Double) (Matrix Double)
+  let model :: Para' (EmptyParam, (Vector Double, Matrix Double)) ((EmptyParam, (Vector Double, Matrix Double)), Vector Double) (Vector Double)
       model = dense (4, 3) identityL
   -- let umodel :: Lens' ((Matrix Double, Matrix Double), Matrix Double) (Matrix Double)
   --     umodel = update >> plens model
 
   -- print (fwd umodel (params model, input))
 
-  let input = fromList 4 1 [4.9, 3.0, 1.4, 0.2]
-  let fpb = fromList 3 1 [0.0, 0.0, 0.0]
-  let fpl =
+  let input :: Vector Double
+      input = fromList [4.9, 3.0, 1.4, 0.2]
+  let fpb :: Vector Double
+      fpb = fromList [0.0, 0.0, 0.0]
+  let fpl :: Matrix Double
+      fpl =
         fromLists
           [ [-0.01517759, -0.00055333, -0.00697705, -0.0004722],
             [-0.01130874, 0.00753457, 0.00460682, -0.00851338],
@@ -104,7 +107,8 @@ testPipeline = do
           ]
   let fps = (fpb, fpl)
 
-  let ret = fromList 3 1 [1, 2, 3]
+  let ret :: Vector Double
+      ret = fromList [1, 2, 3]
 
   -- print $ fwd (plens model) (fps, input)
   -- print $ rev (plens model) (ret, (fps, input))
@@ -115,23 +119,24 @@ testPipeline = do
 
 testPipeline' :: IO ()
 testPipeline' = do
-  let q :: Para' (EmptyParam, (Matrix Double, Matrix Double)) ((EmptyParam, (Matrix Double, Matrix Double)), Matrix Double) (Matrix Double)
+  let q :: Para' (EmptyParam, (Vector Double, Matrix Double)) ((EmptyParam, (Vector Double, Matrix Double)), Vector Double) (Vector Double)
       q = dense (2, 2) identityL
 
-  let j :: Para' (Matrix Double) (Matrix Double, Matrix Double) (Matrix Double)
+  let j :: Para' (Matrix Double) (Matrix Double, Vector Double) (Vector Double)
       j = linearP (2, 2)
-  let s = biasP 2
+  let s :: Para' (Vector Double) (Vector Double, Vector Double) (Vector Double)
+      s = biasP 2
 
-  let bp = fromList 2 1 [1, 1]
+  let bp = fromList [1, 1]
   let lp = fromLists [[1, 2], [3, 4]]
-  let inp = fromList 2 1 [7, 8]
+  let inp = fromList [7, 8]
   -- let z = fwd (plens q) ((bp, lp), inp)
 
-  let ret = fromList 2 1 [9, 9]
+  let ret = fromList [9, 9]
 
   --   let ptl = assocL . (identityL `alongside` linear) . add
 
-  let ps :: (Matrix Double, ((Matrix Double, Matrix Double), Matrix Double))
+  let ps :: (Vector Double, ((Vector Double, Matrix Double), Vector Double))
       ps = (ret, ((bp, lp), inp))
 
   let nadd :: Num a => Lens (a, a) (d, d) a d

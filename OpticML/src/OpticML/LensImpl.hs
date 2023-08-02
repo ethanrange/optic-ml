@@ -1,5 +1,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module OpticML.LensImpl
   ( identityL,
@@ -16,7 +18,8 @@ where
 
 import OpticML.Lenses (Lens, lens, Lens')
 import Control.Monad (join)
-import Data.Matrix
+import Numeric.LinearAlgebra (Matrix, Transposable (tr), Vector, (#>), outer, sumElements, Linear (scale), cmap, Numeric)
+import Numeric.LinearAlgebra.Devel (zipVectorWith)
 
 -- Identity Lens
 
@@ -59,14 +62,14 @@ add = lens v (join (,) . fst)
         v :: Num i => (i, i) -> i
         v = uncurry (+)
 
-linear :: Num a => Lens (Matrix a, Matrix a) (Matrix a, Matrix a) (Matrix a) (Matrix a)
+linear :: forall a. Numeric a => Lens (Matrix a, Vector a) (Matrix a, Vector a) (Vector a) (Vector a)
 linear = lens v u
     where
-        v :: Num a => (Matrix a, Matrix a) -> Matrix a
-        v = uncurry (*)
+        v :: (Matrix a, Vector a) -> Vector a
+        v = uncurry (#>)
 
-        u :: Num a => (Matrix a, (Matrix a, Matrix a)) -> (Matrix a, Matrix a)
-        u (y, (m, x)) = (y * transpose x, transpose m * y)
+        u :: (Vector a, (Matrix a, Vector a)) -> (Matrix a, Vector a)
+        u (y, (m, x)) = (outer y x, tr m #> y)
 
 -- Learning Rate Lens
 
@@ -80,39 +83,36 @@ update = lens id (uncurry (+))
 
 -- MSE Lens
 
-mse :: forall a . Fractional a => Lens' (Matrix a, Matrix a) a
+mse :: forall a . (Fractional a, Numeric a, Num (Vector a)) => Lens' (Vector a, Vector a) a
 mse = lens v u
     where
-        hadamard :: Matrix a -> Matrix a -> Matrix a
-        hadamard = elementwise (*)
+        v :: (Vector a, Vector a) -> a
+        v (y, ey)= 0.5 * sumElements (join (*) (y - ey))
 
-        v :: (Matrix a, Matrix a) -> a
-        v (y, ey)= 0.5 * (sum . toList) diffSq
-            where
-                diffSq = join hadamard (y - ey)
-
-        u :: (a, (Matrix a, Matrix a)) -> (Matrix a, Matrix a)
-        u (l, (y, ey)) = (fromLists [[]], mapCol (const (* l)) 1 (y - ey))
+        u :: (a, (Vector a, Vector a)) -> (Vector a, Vector a)
+        u (lr, (y, ey)) = (ey, scale lr (y - ey))
 
 -- Activation lenses
 
-relu :: forall a . (Num a, Ord a) => Lens' (Matrix a) (Matrix a)
+relu :: forall a . (Numeric a, Ord a) => Lens' (Vector a) (Vector a)
 relu = lens v u
     where
-        v :: Matrix a -> Matrix a
-        v = mapCol (const (max 0)) 1
+        v :: Vector a -> Vector a
+        v = cmap (max 0)
 
-        u :: (Matrix a, Matrix a) -> Matrix a
-        u (dy, x) = mapCol (\r yv -> if getElem r 1 x > 0 then yv else 0) 1 dy
+        u :: (Vector a, Vector a) -> Vector a
+        u (dy, x) = zipVectorWith (\yv xv -> if xv > 1 then yv else 0) dy x
 
-sig :: Floating a => a -> a
-sig x = 1 / (1 + exp (-x))
 
-sigmoid :: forall a . Floating a => Lens' (Matrix a) (Matrix a)
+
+sigmoid :: forall a . (Floating a, Numeric a) => Lens' (Vector a) (Vector a)
 sigmoid = lens v u
     where
-        v :: Matrix a -> Matrix a
-        v = mapCol (const sig) 1
+        v :: Vector a -> Vector a
+        v = cmap sig
 
-        u :: (Matrix a, Matrix a) -> Matrix a
-        u (dy, s) = mapCol (\r x -> sig x * (1 - sig x) * getElem r 1 dy) 1 s
+        u :: (Vector a, Vector a) -> Vector a
+        u (dy, x) = zipVectorWith (\yv xv -> sig xv * (1 - sig xv) * yv) dy x
+
+        sig :: a -> a
+        sig x = 1 / (1 + exp (-x))

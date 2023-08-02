@@ -33,7 +33,7 @@ library
     -- other-extensions:
     build-depends:    
         base ^>=4.16.4.0,
-        matrix,
+        hmatrix >= 0.20.2,
         normaldistribution,
         random
     
@@ -72,7 +72,7 @@ executable OpticML
     -- other-extensions:
     build-depends:
         base ^>=4.16.4.0,
-        matrix,
+        hmatrix >= 0.20.2,
         bytestring >= 0.11.3.1,
         cassava >= 0.5.3.0,
         vector >= 0.13.0.0,
@@ -110,6 +110,6 @@ test-suite OpticML-test
         base ^>=4.16.4.0,
         tasty,
         tasty-hunit,
-        matrix,
+        hmatrix >= 0.20.2,
         OpticML
 

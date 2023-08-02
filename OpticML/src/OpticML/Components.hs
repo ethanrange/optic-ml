@@ -1,4 +1,5 @@
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module OpticML.Components
   ( dense,
@@ -10,18 +11,18 @@ where
 import OpticML.Parametric (Para(..), Para', (|.|), liftPara, EmptyParam(..))
 import System.Random (Random)
 import Data.Random.Normal ( mkNormals )
-import Data.Matrix (Matrix, zero, fromList)
+import Numeric.LinearAlgebra (Matrix, Vector, (><), Konst (konst), Numeric)
 import OpticML.LensImpl (linear, add)
 import OpticML.Lenses (Lens')
 
 seed :: Int
 seed = 384723978470123987
 
-dense :: (Floating a, Random a) => (Int, Int) -> Lens' (Matrix a) (Matrix a) -> Para' (EmptyParam, (Matrix a, Matrix a)) ((EmptyParam, (Matrix a, Matrix a)), Matrix a) (Matrix a)
+dense :: (Numeric a, Floating a, Random a, Num (Vector a)) => (Int, Int) -> Lens' (Vector a) (Vector a) -> Para' (EmptyParam, (Vector a, Matrix a)) ((EmptyParam, (Vector a, Matrix a)), Vector a) (Vector a)
 dense (a, b) act = linearP (a, b) |.| biasP b |.| liftPara act
 
-linearP :: (Floating a, Random a) => (Int, Int) -> Para' (Matrix a) (Matrix a, Matrix a) (Matrix a)
-linearP (a, b) = Para (fromList b a $ take (a * b) (mkNormals seed)) linear
+linearP :: (Numeric a, Floating a, Random a) => (Int, Int) -> Para' (Matrix a) (Matrix a, Vector a) (Vector a)
+linearP (a, b) = Para (b >< a $ take (a * b) (mkNormals seed)) linear
 
-biasP :: Num a => Int -> Para' (Matrix a) (Matrix a, Matrix a) (Matrix a)
-biasP b = Para (zero b 1) add
+biasP :: (Numeric a, Num (Vector a)) => Int -> Para' (Vector a) (Vector a, Vector a) (Vector a)
+biasP b = Para (konst 0 b) add

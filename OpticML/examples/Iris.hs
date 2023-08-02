@@ -7,7 +7,7 @@ import Data.Csv ( decode, HasHeader(HasHeader) )
 import qualified Data.Vector as V
 
 import OpticML (Para', Para(..), dense, sigmoid, update, alongside, liftPara, lr, mse, (|.|), rev, fwd, EmptyParam(..))
-import Data.Matrix (Matrix, colVector, zero, setElem, fromLists, toList)
+import Numeric.LinearAlgebra (Matrix, Vector, Konst (konst), accum, fromList, toList, Numeric)
 import qualified Data.List as DL
 
 import Data.List (maximumBy)
@@ -15,19 +15,19 @@ import Data.Ord (comparing)
 import Data.Maybe ( fromJust, fromMaybe )
 
 type IrisData = (Double, Double, Double, Double, String)
-type Features = Matrix Double
-type Label = Matrix Double
+type Features = Vector Double
+type Label = Vector Double
 
 type LRParam = EmptyParam
-type LossParam = Matrix Double
+type LossParam = Vector Double
 type ActParam = EmptyParam
 
-type ModelParam = (ActParam, (Matrix Double, Matrix Double))
+type ModelParam = (ActParam, (Vector Double, Matrix Double))
 type LearnerParam = ((LRParam, LossParam), ModelParam)
 
-type Result = Matrix Double
-type Input = Matrix Double
-type Expected = Matrix Double
+type Result = Vector Double
+type Input = Vector Double
+type Expected = Vector Double
 type Loss = Double
 
 type Model = Para' ModelParam (ModelParam, Input) Result
@@ -36,16 +36,16 @@ type Learner = Para' LearnerParam (LearnerParam, Input) ()
 type OHClassMap = [(String, Int)]
 
 ohMap :: OHClassMap
-ohMap = [("Iris-setosa", 1), ("Iris-versicolor", 2), ("Iris-virginica", 3)]
+ohMap = [("Iris-setosa", 0), ("Iris-versicolor", 1), ("Iris-virginica", 2)]
 
 oneHot :: [(String, Int)] -> String -> Label
-oneHot opts c = setElem 1.0 (look c opts, 1) (zero 3 1)
+oneHot opts c = accum (konst 0 3) (const id) [(look c opts, 1.0)]
     where
         look :: String -> OHClassMap -> Int
         look = (.) fromJust . DL.lookup
 
 formatIrisData :: IrisData -> (Features, Label)
-formatIrisData (sl, sw, pl, pw, c) = ( colVector (V.fromList [sl, sw, pl, pw])
+formatIrisData (sl, sw, pl, pw, c) = ( fromList [sl, sw, pl, pw]
                                      , oneHot ohMap c
                                      )
 
@@ -81,9 +81,9 @@ constructLearner omp = (mwu |.| (loss |.| cap), mp)
         cap = liftPara $ lr 0.01
 
         loss :: Para LossParam (Result, Expected) (Result, Result) Loss Double
-        loss = Para (fromLists [[]]) mse
+        loss = Para (fromList []) mse
 
-argMax :: Ord a => Matrix a -> Int
+argMax :: (Ord a, Numeric a) => Vector a -> Int
 argMax = fst . maximumBy (comparing snd) . zip [0..] . toList
 
 accuracy :: [(Features, Label)] -> ModelParam -> Double
