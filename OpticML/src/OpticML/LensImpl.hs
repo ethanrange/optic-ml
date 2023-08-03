@@ -25,6 +25,7 @@ import Numeric.LinearAlgebra.Devel (zipVectorWith)
 
 identityL :: Lens a a a a
 identityL = lens id fst
+{-# INLINE identityL #-}
 
 -- Associative Lenses
 
@@ -61,6 +62,7 @@ add = lens v (join (,) . fst)
     where
         v :: Num i => (i, i) -> i
         v = uncurry (+)
+{-# INLINE add #-}
 
 linear :: forall a. Numeric a => Lens (Matrix a, Vector a) (Matrix a, Vector a) (Vector a) (Vector a)
 linear = lens v u
@@ -70,16 +72,19 @@ linear = lens v u
 
         u :: (Vector a, (Matrix a, Vector a)) -> (Matrix a, Vector a)
         u (y, (m, x)) = (outer y x, tr m #> y)
+{-# INLINE linear #-}
 
 -- Learning Rate Lens
 
 lr :: Double -> Lens s Double () ()
 lr e = lens (const ()) (const e)
+{-# INLINE lr #-}
 
 -- Update Lens
 
 update :: Num a => Lens a a a a
 update = lens id (uncurry (+))
+{-# INLINE update #-}
 
 -- MSE Lens
 
@@ -91,6 +96,7 @@ mse = lens v u
 
         u :: (a, (Vector a, Vector a)) -> (Vector a, Vector a)
         u (lr, (y, ey)) = (ey, scale lr (y - ey))
+{-# INLINE mse #-}
 
 -- Activation lenses
 
@@ -102,8 +108,7 @@ relu = lens v u
 
         u :: (Vector a, Vector a) -> Vector a
         u (dy, x) = zipVectorWith (\yv xv -> if xv > 1 then yv else 0) dy x
-
-
+{-# INLINE relu #-}
 
 sigmoid :: forall a . (Floating a, Numeric a) => Lens' (Vector a) (Vector a)
 sigmoid = lens v u
@@ -116,3 +121,4 @@ sigmoid = lens v u
 
         sig :: a -> a
         sig x = 1 / (1 + exp (-x))
+{-# INLINE sigmoid #-}

@@ -96,3 +96,4 @@ alongside :: Lens s t a b -> Lens s' t' a' b' -> Lens (s, s') (t, t') (a, a') (b
 alongside l1 l2 = lens (bimap (fwd l1) (fwd l2)) u
     where 
       u ((b, b'), (s, s')) = (rev l1 (b, s), rev l2 (b', s'))
+{-# INLINE alongside #-}

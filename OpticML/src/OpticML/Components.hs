@@ -20,9 +20,12 @@ seed = 384723978470123987
 
 dense :: (Numeric a, Floating a, Random a, Num (Vector a)) => (Int, Int) -> Lens' (Vector a) (Vector a) -> Para' (EmptyParam, (Vector a, Matrix a)) ((EmptyParam, (Vector a, Matrix a)), Vector a) (Vector a)
 dense (a, b) act = linearP (a, b) |.| biasP b |.| liftPara act
+{-# INLINE dense #-}
 
 linearP :: (Numeric a, Floating a, Random a) => (Int, Int) -> Para' (Matrix a) (Matrix a, Vector a) (Vector a)
 linearP (a, b) = Para (b >< a $ take (a * b) (mkNormals seed)) linear
+{-# INLINE linearP #-}
 
 biasP :: (Numeric a, Num (Vector a)) => Int -> Para' (Vector a) (Vector a, Vector a) (Vector a)
 biasP b = Para (konst 0 b) add
+{-# INLINE biasP #-}

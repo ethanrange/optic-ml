@@ -44,6 +44,7 @@ instance Num EmptyParam where
 
 liftPara :: Lens s t a b -> Para EmptyParam (c, s) (c, t) a b
 liftPara l = Para EmptyParam (p2 . l)
+{-# INLINE liftPara #-}
 
 composePara :: forall p s a b m n q t . Para p (p, s) (p, t) a b
                                      -> Para q (q, a) (q, b) m n
@@ -52,8 +53,10 @@ composePara (Para p l1) (Para q l2) = Para (q, p) cl
     where
         cl :: Lens ((q, p), s) ((q, p), t) m n
         cl = assocL . (identityL `alongside` l1) . l2
+{-# INLINE composePara #-}
 
 (|.|) :: Para p (p, s) (p, t) a b
       -> Para q (q, a) (q, b) m n
       -> Para (q, p) ((q, p), s) ((q, p), t) m n
 p |.| q = p `composePara` q
+{-# INLINE (|.|) #-}
