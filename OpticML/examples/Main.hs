@@ -5,4 +5,4 @@ module Main
 import Iris (runPipeline)
 
 main :: IO ()
-main = runPipeline 1000 "data/iris.csv"
+main = runPipeline 400 "data/iris.csv"
